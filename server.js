@@ -1,0 +1,11 @@
+const express=require('express');const fs=require('fs');const path=require('path');
+const app=express();const PORT=process.env.PORT||3000;const DATA=path.join(__dirname,'data');const FILE=path.join(DATA,'project.json');
+fs.mkdirSync(DATA,{recursive:true});
+const starter={version:1,title:'새 선택지형 스토리',settings:{startNode:'start'},nodes:[{id:'start',type:'story',title:'첫 장면',text:'이곳에 첫 장면의 이야기를 작성하세요.',choices:[{id:'c1',text:'문을 연다',next:'end',condition:'',effect:'',miniGame:null},{id:'c2',text:'돌아간다',next:'end',condition:'',effect:'',miniGame:null}]},{id:'end',type:'ending',title:'끝',text:'엔딩 장면입니다.',choices:[]}],variables:{}};
+if(!fs.existsSync(FILE))fs.writeFileSync(FILE,JSON.stringify(starter,null,2));
+app.use(express.json({limit:'5mb'}));app.use(express.static(path.join(__dirname,'public')));
+app.get('/api/project',(req,res)=>{try{res.json(JSON.parse(fs.readFileSync(FILE,'utf8')))}catch(e){res.status(500).json({error:e.message})}});
+app.put('/api/project',(req,res)=>{try{fs.writeFileSync(FILE,JSON.stringify(req.body,null,2));res.json({ok:true,savedAt:new Date().toISOString()})}catch(e){res.status(500).json({error:e.message})}});
+app.post('/api/project/reset',(req,res)=>{fs.writeFileSync(FILE,JSON.stringify(starter,null,2));res.json(starter)});
+app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public/index.html')));
+app.listen(PORT,()=>console.log('StoryForge running on '+PORT));
