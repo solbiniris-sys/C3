@@ -15,7 +15,7 @@ const fill=(r,t,p)=>String(t).replaceAll('{A}',r.cfg.A).replaceAll('{B}',r.cfg.B
 const add=(r,k,t,who)=>{r.log.push({k,who,t:fill(r,t,who)});if(r.log.length>500)r.log.shift()};
 const comfort=r=>r.room.reduce((a,b)=>a+b,0),evOf=r=>E.get(String(r.ev),r.ch),okLoc=(r,l)=>!D.loc[l].ch||D.loc[l].ch.includes(r.ch),gate=(p,a)=>!a.g||p.st[a.g[0]]>=a.g[1];
 const push=c=>{const r=R[c];save();const on={};online(c).forEach(k=>on[k]=1);const e=r.ev==null?null:evOf(r);
- socks(c).forEach(w=>w.send(JSON.stringify({type:'state',s:{...r,pw:0,seen:0,log:r.log.slice(-150),chat:(r.chat||[]).slice(-150),cc:r.cc||0,pick:{A:!!r.pick.A,B:!!r.pick.B},on,comfort:comfort(r),colN:D.COLN,len:D.chap[r.ch].len,evd:e&&{title:fill(r,e[0]),t:fill(r,e[1]),c:e[2].map(o=>[fill(r,o[0]),o[1],o[2]])}}})))};
+ socks(c).forEach(w=>w.send(JSON.stringify({type:'state',s:{...r,pw:0,seen:0,log:r.log.slice(-150),chat:(r.chat||[]).slice(-150),cc:r.cc||0,pick:{A:!!r.pick.A,B:!!r.pick.B,...(w.role&&r.pick[w.role]?{[w.role]:r.pick[w.role]}:{})},on,comfort:comfort(r),colN:D.COLN,len:D.chap[r.ch].len,evd:e&&{title:fill(r,e[0]),t:fill(r,e[1]),c:e[2].map(o=>[fill(r,o[0]),o[1],o[2]])}}})))};
 const grow=(r,k,s,n)=>{const p=r.p[k],old={...p.st};p.xp[s]=(p.xp[s]||0)+n;if(p.xp[s]>=5&&p.st[s]<15){p.xp[s]=0;p.st[s]++;add(r,'sys',`{P}의 ${s}이(가) ${p.st[s]}(으)로 자랐다.`,k);unlock(r,k,old)}};
 const ST=[[0,'서먹한 사이'],[20,'함께 자란 사이'],[40,'서로의 그림자'],[60,'없어선 안 될 사람'],[80,'가장 오랜 가족']],sg=b=>ST.filter(x=>b>=x[0]).length-1;
 const bondd=(r,d)=>{const o=sg(r.bond);r.bond=cl(r.bond+d,0,100);if(sg(r.bond)>o)add(r,'sys',`[유대] 두 사람은 이제 '${ST[sg(r.bond)][1]}'.`)},
