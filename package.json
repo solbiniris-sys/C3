@@ -1,7 +1,0 @@
-{
-  "name":"waterline-v86",
-  "version":"0.86.0",
-  "private":true,
-  "description":"WATERLINE - character chemistry, location stories and dice checks",
-  "scripts":{"start":"node server.js"}
-}
