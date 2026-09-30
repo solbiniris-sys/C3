@@ -1,0 +1,9 @@
+{
+  "name": "waterline-v90",
+  "version": "0.90.0",
+  "private": true,
+  "description": "WATERLINE - character life, story chains, NPC relationships, collections and dynamic place activities",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
