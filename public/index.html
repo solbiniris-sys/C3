@@ -1,0 +1,14 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>물빛 저택</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body>
+<div id="login"><div class="card"><h1 id="lt">물빛 저택</h1><p>물 위에 절반, 물 아래 절반. 두 아이와 커다란 가족의 이야기.</p>
+<input id="room" placeholder="세션 코드 (둘이 같은 코드)" autocomplete="off"><input id="pw" type="password" placeholder="비밀번호 (4자 이상)">
+<details><summary>새 세션이라면 이름 정하기</summary><label>게임 제목<input id="c-title" placeholder="A와 B"></label><label>주인공 A<input id="c-A" placeholder="A"></label><label>주인공 B<input id="c-B" placeholder="B"></label><label>커다란 가족 (변이동물)<input id="c-D" placeholder="아빠"></label><small>이미 있는 세션이면 무시돼요. 나중에 기록 탭에서 바꿀 수 있어요.</small></details>
+<div class="row"><button onclick="join('A')">A로 입장</button><button onclick="join('B')">B로 입장</button></div></div></div>
+<div id="game" data-v="story" hidden>
+<div id="scene"><div id="sky"></div><div id="water"></div><span id="sun"></span><span id="whale">🐋</span><span id="town">🏘️</span></div><header><b id="ti"></b><span id="when"></span><span id="hud"></span></header>
+<main>
+<section id="story"><div id="log"></div><div id="evbox"></div><div class="comp"><div id="modes"><button data-k="say" class="on">대사</button><button data-k="act">지문</button><button data-k="mind">속마음</button></div><div class="in"><textarea id="t" rows="2" placeholder="말한다"></textarea><button class="go" onclick="say()">보내기</button></div></div></section>
+<section id="chat"><p class="hint">여기서 나누는 말은 이야기 기록·저장 파일에 들어가지 않아요. <code>/r 2d6+1</code> 처럼 주사위도 굴릴 수 있어요.</p><div id="clog"></div><div class="in"><input id="ct" placeholder="잡담하기" autocomplete="off"><button class="go" onclick="csay()">보내기</button></div></section><section id="day"></section><section id="house"></section><section id="town2"></section><section id="rec"></section>
+</main>
+<nav id="nav"><button data-v="story" class="on">이야기</button><button data-v="chat">잡담<u id="bd" hidden></u></button><button data-v="day">하루</button><button data-v="house">저택</button><button data-v="town2">마을</button><button data-v="rec">기록</button></nav>
+</div><div id="setup" hidden></div><div id="dice" hidden onclick="dnext()"><p id="dinfo"></p><div id="cube">20</div><p id="dres"></p></div><script src="app.js"></script></body></html>
