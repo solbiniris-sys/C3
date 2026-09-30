@@ -275,11 +275,9 @@ function actionButtons(){
  ];
  if(tasteHas('a','사과')||tasteHas('b','시장')) common.push(['좋아하는 것을 찾아 나선다','누구의 취향을 따라갈지 고른다.','취향 따라가기']);
  if(tasteHas('pet','물놀이')) common.push(['거대동물이 가고 싶은 곳을 따라간다','오늘은 녀석이 먼저 길을 정하게 둔다.','거대동물 따라가기']);
- let place=locationActionButtons(true).replaceAll('onclick="doRoom(\'','data-room="').replaceAll('\')"','"');
- // location buttons are rendered separately below; common deck is deliberately reshuffled each render.
+ // location buttons are returned as button HTML strings; do not treat the array as a string.
  let pool=shuffle(common.slice()).slice(0,4).map(x=>`<button class="action dynamic-action" data-room="${esc(x[2])}" ${dis}><b>${esc(x[0])}</b><small>${esc(x[1])}</small></button>`);
- const loc=locationActionButtons(true);
- const locBtns=loc?loc.match(/<button[\s\S]*?<\/button>/g)||[]:[];
+ const locBtns=locationActionButtons(true);
  if(locBtns.length) pool.push(locBtns[Math.floor(Math.random()*locBtns.length)]);
  // One extra contextual activity makes every day feel less identical.
  if(Math.random()<0.5) pool.push(`<button class="action dynamic-action" data-room="오늘의 심부름" ${dis}><b>오늘의 심부름을 찾아본다</b><small>누군가의 부탁이 하루를 바꿀 수도 있다.</small></button>`);
