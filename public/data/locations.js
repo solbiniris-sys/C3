@@ -1,3 +1,4 @@
+window.DATA=window.DATA||{}; // 가장 먼저 로드되는 data 파일: DATA 네임스페이스 생성
 DATA.locations={
  manor:{name:'저택',icon:'🏚',desc:'절반이 물에 잠겼지만 방수만은 기가 막힌 붉은 벽돌 저택.'},
  market:{name:'수상 시장',icon:'🛶',desc:'운하 위에 뜬 상인들의 배가 빽빽한 시장.'},
