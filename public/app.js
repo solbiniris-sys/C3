@@ -1,21 +1,21 @@
 (() => {
 // ==========================================
 // WATERLINE: 2-PLAYER CO-OP RP SANDBOX
-// (Cocoforia + Princess Maker + Stardew Valley + TRPG)
+// (Cocoforia + Princess Maker + Stardew Valley + TRPG + Quests)
 // ==========================================
 
 const DEFAULT_IMG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IiM2NjYiPj88L3RleHQ+PC9zdmc+";
 
-// 계절 & 조석(Tide) 시스템 (세계관 독창적 규칙)
+// 계절 & 조석(Tide) 시스템
 const SEASONS = ['🌸 물안개의 봄', '☀️ 수위가 높은 여름', '🍂 서늘한 바람의 가을', '❄️ 수면이 어는 겨울'];
-const TIDES = ['🌊 만조 (수위 상승: 낚시/채집 보너스)', '🪨 간조 (수위 하락: 유적 탐사 보너스)'];
+const TIDES = ['🌊 만조 (낚시 보너스)', '🪨 간조 (유적 탐사 보너스)'];
 
-// 농사 작물 데이터 (세계관 반영)
+// 농사 작물 데이터
 const SEEDS = {
-    '은빛 산소초': { cost: 15, time: 2, crop: '은빛 산소초', sell: 30, healHp: 10, healStr: 10, desc: '잠수 시 산소를 공급해주는 신비한 해초. (2턴)' },
-    '동굴당근': { cost: 20, time: 3, crop: '동굴당근', sell: 45, healHp: 15, healStr: 15, desc: '햇빛 없이 습기로 자라는 붉은 당근. (3턴)' },
-    '물수국': { cost: 40, time: 5, crop: '물수국', sell: 100, healHp: 20, healStr: 40, desc: '스트레스(수몰병) 치료에 탁월한 꽃. (5턴)' },
-    '아스터의 눈물': { cost: 80, time: 8, crop: '마력 결정', sell: 250, healHp: 50, healStr: 50, desc: '고대 엔진의 마력을 먹고 자라는 결정. (8턴)' }
+    '물토마토': { cost: 15, time: 2, crop: '물토마토', sell: 30, healHp: 10, healStr: 10, desc: '가장 키우기 쉽습니다. (2턴)' },
+    '동굴당근': { cost: 20, time: 3, crop: '동굴당근', sell: 45, healHp: 15, healStr: 15, desc: '어두운 곳에서 잘 자랍니다. (3턴)' },
+    '물수국': { cost: 40, time: 5, crop: '물수국', sell: 100, healHp: 20, healStr: 40, desc: '수몰병 치료에 탁월합니다. (5턴)' },
+    '마력결정': { cost: 80, time: 8, crop: '마력결정', sell: 250, healHp: 50, healStr: 50, desc: '고대 엔진의 마력을 먹고 자랍니다. (8턴)' }
 };
 
 // 낚시 물고기 데이터
@@ -32,27 +32,39 @@ const FISH_DB = [
 const ENEMIES = [
     { name: '오염된 톱니거북', hp: 60, atk: 12, ac: 10, reward: 35, desc: '단단한 등껍질을 가진 거대한 돌연변이 거북입니다.' },
     { name: '심해의 그림자', hp: 55, atk: 18, ac: 12, reward: 45, desc: '물안개 속에서 일렁이는 미지의 촉수 괴수입니다.' },
-    { name: '고대 기계 파수꾼', hp: 100, atk: 22, ac: 14, reward: 90, desc: '수몰 이전 도시를 지키던 낡은 수중 골렘입니다.' },
-    { name: '심연의 포식자', hp: 150, atk: 28, ac: 16, reward: 250, desc: '수로 가장 깊은 곳에서 눈을 뜬 거대한 재앙입니다!' }
+    { name: '고대 기계 파수꾼', hp: 100, atk: 22, ac: 14, reward: 90, desc: '수몰 이전 도시를 지키던 낡은 수중 골렘입니다.' }
 ];
 
 // 상점 아이템
 const SHOP_ITEMS = [
-    { id: 'oxygen_tank', name: '고대 산소통', price: 60, desc: '수몰병(스트레스)을 치료합니다. (스트레스 -50)', type: 'stress', val: -50 },
+    { id: 'oxygen_tank', name: '고대 산소통', price: 60, desc: '수몰병을 치료합니다. (스트레스 -50)', type: 'stress', val: -50 },
     { id: 'book', name: '방수된 고서', price: 70, desc: '고대 지식이 담긴 책입니다. (지력 +25)', type: 'int', val: 25 },
     { id: 'perfume', name: '물안개 향수', price: 70, desc: '매혹적인 향기가 납니다. (매력 +25)', type: 'charm', val: 25 },
-    { id: 'sword', name: '사공의 작살', price: 80, desc: '전투용으로 개조된 작살입니다. (체력 +30)', type: 'hp', val: 30 },
+    { id: 'sword', name: '사공의 작살', price: 80, desc: '전투용으로 개조된 무기입니다. (체력 +30)', type: 'hp', val: 30 },
     { id: 'ring', name: '수국 은반지', price: 100, desc: '둘이 함께 나누어 낍니다. (유대감 대폭 상승)', type: 'rel', val: 30 }
 ];
 
+// 📜 직관적인 목표: 퀘스트 DB
+const QUEST_DB = [
+    { id: 0, title: '초보 농부', desc: '가방에 [물토마토] 1개 보유 (제출)', req: (S)=>S.items['물토마토']>=1, consume: (S)=>{S.items['물토마토']--;}, reward: 40 },
+    { id: 1, title: '지식의 탐구', desc: '아무나 [지력] 70 달성', req: (S)=>S.stats.a.int>=70 || S.stats.b.int>=70, consume: (S)=>{}, reward: 60 },
+    { id: 2, title: '수로의 낚시꾼', desc: '가방에 [은빛송어] 1마리 보유 (제출)', req: (S)=>S.items['은빛송어']>=1, consume: (S)=>{S.items['은빛송어']--;}, reward: 50 },
+    { id: 3, title: '끈끈한 가족', desc: '서로의 [유대감] 70 달성', req: (S)=>S.stats.a.rel>=70, consume: (S)=>{}, reward: 100 },
+    { id: 4, title: '전투 준비', desc: '아무나 [체력] 80 달성', req: (S)=>S.stats.a.hp>=80 || S.stats.b.hp>=80, consume: (S)=>{}, reward: 80 },
+    { id: 5, title: '고급 작물 납품', desc: '가방에 [물수국] 1개 보유 (제출)', req: (S)=>S.items['물수국']>=1, consume: (S)=>{S.items['물수국']--;}, reward: 150 },
+    { id: 6, title: '전설적인 매력', desc: '아무나 [매력] 100 달성', req: (S)=>S.stats.a.charm>=100 || S.stats.b.charm>=100, consume: (S)=>{}, reward: 200 }
+];
+
 let S = null;
-let roomCodeInput = "water_coop_01";
+let roomCodeInput = "water_quest_02";
 let tempSetup = {
-    names: { a: '', b: '', pet: '', sys: '시스템' },
-    images: { a: DEFAULT_IMG, b: DEFAULT_IMG, pet: DEFAULT_IMG, sys: DEFAULT_IMG }
+    names: { a: '', b: '', pet: '' },
+    images: { a: DEFAULT_IMG, b: DEFAULT_IMG, pet: DEFAULT_IMG }
 };
 
-// --- 공통 유틸리티 ---
+// 시스템(GM)의 고정 이미지 (톱니바퀴/안내 아이콘 느낌의 SVG)
+const SYS_IMG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMmMyYzJjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiNlN2U3ZTciPlNZUzwvdGV4dD48L3N2Zz4=";
+
 function getSaveKey() { return `waterline_room_${S ? S.roomCode : roomCodeInput}`; }
 function save() { if (S) localStorage.setItem(getSaveKey(), JSON.stringify(S)); }
 function load(code) {
@@ -63,10 +75,10 @@ function load(code) {
 function initState(code) {
     return {
         roomCode: code,
-        month: 1, turn: 0, tide: 0, // 0: 만조, 1: 간조
-        money: 100, // 초기 자금
-        names: { ...tempSetup.names, sys: '시스템(GM)' },
-        images: { ...tempSetup.images },
+        month: 1, turn: 0, tide: 0, 
+        money: 100, 
+        names: { ...tempSetup.names, sys: '시스템' }, // GM 대신 깔끔하게 '시스템'
+        images: { ...tempSetup.images, sys: SYS_IMG }, // 시스템 전용 고정 이미지
         stats: {
             a: { hp: 50, int: 50, charm: 50, stress: 0, rel: 50, sick: false },
             b: { hp: 50, int: 50, charm: 50, stress: 0, rel: 50, sick: false }
@@ -75,6 +87,8 @@ function initState(code) {
         items: {}, 
         logs: [],
         combat: null,
+        activeQuests: [0, 1, 2], 
+        completedQuests: [],
         gameOver: false
     };
 }
@@ -84,10 +98,9 @@ function clamp(n) { return Math.max(0, Math.min(999, n)); }
 function getSeason() { return SEASONS[Math.floor((S.month - 1) / 3) % 4]; }
 function rollDice(sides) { return Math.floor(Math.random() * sides) + 1; }
 
-// --- TRPG 롤플레잉 로그 시스템 ---
 function addLog(speakerKey, text, isTrpg = false) {
     const name = S.names[speakerKey] || speakerKey;
-    const img = S.images[speakerKey] || DEFAULT_IMG;
+    const img = S.images[speakerKey] || SYS_IMG;
     S.logs.push({ name, img, text, isTrpg });
 }
 
@@ -110,10 +123,8 @@ window.loadRoom = function() {
     const loaded = load(code);
     if (loaded) { 
         S = loaded; 
-        if(!S.farm) S.farm = [null, null, null, null]; 
-        if(!S.items) S.items = {};
-        if(S.tide === undefined) S.tide = 0;
-        if(S.combat === undefined) S.combat = null;
+        if(!S.activeQuests) { S.activeQuests = [0,1,2]; S.completedQuests = []; }
+        if(!S.images.sys) S.images.sys = SYS_IMG;
         render(); 
     } else { alert('해당 코드로 저장된 데이터가 없습니다.'); }
 };
@@ -122,58 +133,60 @@ window.startNewRoom = function() {
     const code = document.getElementById('roomCode').value.trim();
     if (!code) { alert('방 코드를 입력해주세요.'); return; }
     roomCodeInput = code;
+    
     tempSetup.names.a = document.getElementById('na').value.trim() || 'Player 1';
     tempSetup.names.b = document.getElementById('nb').value.trim() || 'Player 2';
     tempSetup.names.pet = document.getElementById('np').value.trim() || '보호자(짐승)';
     
     S = initState(code);
-    addLog('sys', `[방 코드: ${code}] 주사위와 농사, 그리고 두 사람의 유대가 빛나는 수몰 도시 생존기가 시작되었습니다.`);
+    addLog('sys', `[시스템] 세션 방 <${code}>이 생성되었습니다. TRPG 룰이 적용된 생존기가 시작됩니다.`);
     save(); render();
 };
 
 function setupView() {
+    // 시스템(GM) 프로필 설정 제거! 오직 플레이어 캐릭터들만 설정합니다.
     document.getElementById('app').innerHTML = `
     <main class="shell" style="max-width: 850px;">
         <section class="paper setup">
-            <div class="sub">WATERLINE · 2-Player CO-OP TRPG & Farming</div>
+            <div class="sub">WATERLINE · 2-Player CO-OP TRPG Sandbox</div>
             <h1 style="font-size:28px;">수면 아래 완벽한 방주,<br>짐승이 품은 두 아이.</h1>
-            <p class="lead" style="font-size:0.95rem;"><b>2인 1조 생명줄 시스템</b>과 <b>조석(Tide) 현상</b>이 추가되었습니다.<br>서로의 턴을 공유하는 '합동 스케줄'로 유대감을 쌓고, TRPG 턴제 전투에서 서로를 지켜내세요.</p>
+            <p class="lead" style="font-size:0.95rem;">게임 엔진이 TRPG의 <b>'게임 마스터(GM)'</b> 역할을 대신 수행합니다.<br>여러분은 그저 자신의 캐릭터에 몰입하여 퀘스트를 깨고 주사위를 굴리세요.</p>
             
             <div class="field full" style="background:#eef0e5; border:1px solid #b7cec7;">
                 <label>세션 방 코드 (자동 저장 및 불러오기 가능)</label>
                 <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input id="roomCode" placeholder="예: trpg_coop_01" value="${roomCodeInput}" style="flex:1;">
+                    <input id="roomCode" placeholder="예: my_trpg_01" value="${roomCodeInput}" style="flex:1;">
                     <button class="secondary" onclick="loadRoom()">이어하기 (불러오기)</button>
                 </div>
             </div>
 
             <div class="formgrid">
                 <div class="field full">
-                    <h3 style="margin:0 0 15px 0; border-bottom:1px solid #ccc; padding-bottom:5px;">캐릭터 설정 및 프로필 이미지 첨부 (TRPG 토큰용)</h3>
+                    <h3 style="margin:0 0 15px 0; border-bottom:1px solid #ccc; padding-bottom:5px;">플레이어 캐릭터 설정 (토큰용 이미지)</h3>
                     ${characterSetupHtml('a', '첫 번째 아이 (Player 1)')}
                     ${characterSetupHtml('b', '두 번째 아이 (Player 2)')}
                     ${characterSetupHtml('pet', '거대동물 (수호자)')}
-                    ${characterSetupHtml('sys', '시스템 / 게임마스터(GM)', true)}
                 </div>
             </div>
-            <button class="primary start" onclick="startNewRoom()" style="margin-top: 20px; width:100%; font-size:1.1rem;">생명줄 묶고 이야기 시작하기</button>
+            
+            <button class="primary start" onclick="startNewRoom()" style="margin-top: 20px; width:100%; font-size:1.1rem; padding:15px;">생명줄 묶고 탐험 시작하기</button>
         </section>
     </main>`;
 }
 
-function characterSetupHtml(key, label, hideNameInput = false) {
+function characterSetupHtml(key, label) {
     return `
     <div style="display:flex; gap:15px; align-items:center; margin-bottom:20px; background:#fffdf8; padding:10px; border-radius:8px; border:1px solid #e5dece;">
         <img id="preview-${key}" src="${tempSetup.images[key]}" style="width:60px; height:60px; border-radius:8px; object-fit:cover; border:1px solid #ccc;">
         <div style="flex:1;">
             <label style="font-size:0.9rem; font-weight:bold; color:#17332f;">${label}</label>
-            ${hideNameInput ? '' : `<input id="n${key}" maxlength="12" placeholder="캐릭터 이름 입력" style="margin-top:5px; padding:6px; width:100%; box-sizing:border-box;">`}
+            <input id="n${key}" maxlength="12" placeholder="캐릭터 이름 입력" style="margin-top:5px; padding:6px; width:100%; box-sizing:border-box;">
             <input type="file" accept="image/*" onchange="handleImageUpload(event, '${key}')" style="margin-top:8px; font-size:0.8rem; width:100%;">
         </div>
     </div>`;
 }
 
-// --- 턴 및 상태 이상 시스템 (수몰병) ---
+// --- 턴 및 상태 이상 시스템 ---
 function endTurn(turnsConsumed = 1) {
     S.turn += turnsConsumed;
     
@@ -182,11 +195,11 @@ function endTurn(turnsConsumed = 1) {
 
     if (S.turn >= 4) { 
         S.month++; S.turn = 0;
-        S.tide = S.month % 2; // 달마다 만조/간조 교체
+        S.tide = S.month % 2; 
         const newSeason = getSeason();
         const tideText = TIDES[S.tide];
         
-        addLog('sys', `--- 🗓️ ${S.month}개월 차 (${newSeason}) 가 밝았습니다 ---`);
+        addLog('sys', `--- 🗓️ ${S.month}개월 차 (${newSeason}) ---`);
         addLog('sys', `🌊 이번 달의 조류: ${tideText}`);
         
         if (S.month > 24) { S.gameOver = true; evaluateEnding(); }
@@ -198,42 +211,59 @@ function checkStress(targetKey) {
     const st = S.stats[targetKey];
     if (st.stress >= 100 && !st.sick) {
         st.sick = true;
-        addLog('sys', `⚠️ [수몰병 발병] ${S.names[targetKey]}이(가) 극심한 스트레스로 인해 '수몰병(심해의 환각)'에 걸렸습니다!`);
+        addLog('sys', `⚠️ [상태이상] ${S.names[targetKey]}이(가) 극심한 스트레스로 인해 '수몰병(심해의 환각)'에 걸렸습니다!`);
         addLog(targetKey, `숨이... 막혀. 주변에 물이 가득 차오르는 것 같아...!`);
         return true;
     }
     return false;
 }
 
-// --- 스케줄 시스템 (개별 & 합동) ---
+// --- 퀘스트(의뢰) 시스템 ---
+window.claimQuest = function(qIndex) {
+    const qId = S.activeQuests[qIndex];
+    const q = QUEST_DB.find(x => x.id === qId);
+    
+    if (q && q.req(S)) {
+        q.consume(S);
+        S.money += q.reward;
+        addLog('sys', `🎉 [퀘스트 완료] '${q.title}' 목표를 달성하여 보상 ${q.reward}G를 획득했습니다!`);
+        
+        S.completedQuests.push(qId);
+        S.activeQuests.splice(qIndex, 1);
+        
+        const availableQuests = QUEST_DB.filter(x => !S.activeQuests.includes(x.id) && !S.completedQuests.includes(x.id));
+        if (availableQuests.length > 0) {
+            S.activeQuests.push(availableQuests[0].id);
+        }
+        save(); render();
+    }
+};
+
+// --- 스케줄 시스템 ---
 window.doSchedule = function(targetKey, actionType) {
     if (S.gameOver || S.combat) return;
     
-    // 수몰병(Sick) 상태면 행동 불가
     if (S.stats[targetKey].sick && actionType !== '휴식') {
         alert(`${S.names[targetKey]}는 수몰병에 걸려 앓고 있습니다. '휴식'을 취하거나 상점의 '고대 산소통'이 필요합니다.`);
         return;
     }
 
     const st = S.stats[targetKey];
-    const tName = S.names[targetKey];
-    let logText = "";
     
     if (actionType === '수중탐험') {
-        if (Math.random() < 0.3) { startCombat(targetKey); return; } // TRPG 전투 발생
+        if (Math.random() < 0.3) { startCombat(targetKey); return; } 
         st.hp += 10; st.stress += 15;
-        logText = `수중 구역을 탐험하며 체력을 단련했습니다. (체력 +10, 스트레스 +15)`;
+        addLog('sys', `[스케줄] ${S.names[targetKey]}이(가) 수중 구역을 탐험하며 체력을 단련했습니다. (체력 +10, 스트레스 +15)`);
         addLog(targetKey, `물살을 가르는 건 꽤 힘들어. 하지만 강해진 기분이야.`);
     } else if (actionType === '기록관공부') {
         st.int += 10; st.stress += 15;
-        logText = `기록관에서 고대의 마법진을 해독했습니다. (지력 +10, 스트레스 +15)`;
+        addLog('sys', `[스케줄] ${S.names[targetKey]}이(가) 기록관에서 마법진을 해독했습니다. (지력 +10, 스트레스 +15)`);
         addLog(targetKey, `이 문자는 이런 뜻이었구나! 눈은 아프지만 뿌듯해.`);
     } else if (actionType === '시장알바') {
         st.charm += 5; S.money += 25; st.stress += 15;
-        logText = `시장에서 사람들을 응대하며 돈을 벌었습니다. (매력 +5, 가문 재화 +25, 스트레스 +15)`;
+        addLog('sys', `[스케줄] ${S.names[targetKey]}이(가) 시장에서 일을 돕고 재화를 벌었습니다. (매력 +5, 재화 +25, 스트레스 +15)`);
         addLog(targetKey, `어서 오세요! 신선한 물건 보고 가세요!`);
     } else if (actionType === '선착장낚시') {
-        // 만조일 때 낚시 보너스
         let chanceBonus = S.tide === 0 ? 10 : 0; 
         st.hp += 3; st.stress -= 10; 
         const roll = Math.random() * 100 - chanceBonus;
@@ -244,51 +274,46 @@ window.doSchedule = function(targetKey, actionType) {
             if (roll <= cumulative) { caught = f; break; }
         }
         S.items[caught.name] = (S.items[caught.name] || 0) + 1;
-        logText = `낚시를 즐겼습니다. 🎣 [${caught.name}] 획득! (스트레스 -10)`;
+        addLog('sys', `[스케줄] ${S.names[targetKey]}이(가) 낚시를 즐겨 [${caught.name}]을(를) 획득했습니다. (스트레스 -10)`);
         addLog(targetKey, caught.msg);
     } else if (actionType === '휴식') {
         st.stress = Math.max(0, st.stress - 40); S.money -= 10;
         if (st.sick && st.stress < 50) {
-            st.sick = false; // 스트레스가 50 이하로 떨어지면 병 완치
-            addLog('sys', `✨ ${tName}의 수몰병이 호전되었습니다!`);
+            st.sick = false; 
+            addLog('sys', `✨ [회복] ${S.names[targetKey]}의 수몰병이 호전되었습니다!`);
             addLog(targetKey, `이제 숨쉬기가 한결 편해졌어... 고마워.`);
         } else {
-            addLog('pet', `(부드러운 숨소리를 내며 ${tName}의 이불을 덮어줍니다.)`);
+            addLog('pet', `(부드러운 숨소리를 내며 ${S.names[targetKey]}의 이불을 덮어줍니다.)`);
         }
-        logText = `거대동물의 곁에서 푹 쉬었습니다. (스트레스 대폭 감소, 재화 -10)`;
+        addLog('sys', `[스케줄] ${S.names[targetKey]}이(가) 푹 쉬며 스트레스를 풀었습니다. (스트레스 -40, 재화 -10)`);
     }
 
-    addLog('sys', `[개별 스케줄] ${logText}`);
     checkStress(targetKey);
     endTurn(1);
 };
 
-// 🤝 2인 합동 스케줄 (턴 2개 소모)
 window.doCoopSchedule = function(actionType) {
     if (S.gameOver || S.combat) return;
     if (S.turn > 2) { alert('합동 스케줄은 남은 행동력이 2 이상일 때만 가능합니다.'); return; }
     if (S.stats.a.sick || S.stats.b.sick) { alert('수몰병에 걸린 사람이 있어 합동 행동이 불가능합니다.'); return; }
 
-    let logText = "";
-    
     if (actionType === '심해잠수') {
-        // 간조일 때 탐사 보너스
         let exploreBonus = S.tide === 1 ? 2 : 1; 
-        if (Math.random() < 0.4) { startCombat('a'); return; } // 전투 발생률 높음
+        if (Math.random() < 0.4) { startCombat('a'); return; } 
         
         S.stats.a.hp += 15; S.stats.b.hp += 15; 
         S.stats.a.stress += 20; S.stats.b.stress += 20;
         S.stats.a.rel += 10; S.stats.b.rel += 10;
         S.money += (30 * exploreBonus);
         
-        logText = `생명줄을 묶고 심해 유적을 공동 탐사했습니다! (양쪽 체력 +15, 스트레스 +20, 유대감 +10, 재화 +${30*exploreBonus})`;
+        addLog('sys', `[합동 스케줄] 둘이 함께 생명줄을 묶고 심해 유적을 탐사했습니다! (체력 +15, 유대감 +10, 재화 +${30*exploreBonus})`);
         addLog('a', `내가 먼저 내려갈게, 위에서 줄을 잘 잡아줘!`);
         addLog('b', `걱정 마, 내 손은 절대 안 놓칠 테니까!`);
     } else if (actionType === '밤샘해독') {
         S.stats.a.int += 15; S.stats.b.int += 15; 
         S.stats.a.stress += 20; S.stats.b.stress += 20;
         S.stats.a.rel += 10; S.stats.b.rel += 10;
-        logText = `등을 맞대고 고문서를 밤샘 해독했습니다. (양쪽 지력 +15, 스트레스 +20, 유대감 +10)`;
+        addLog('sys', `[합동 스케줄] 등을 맞대고 고문서를 밤샘 해독했습니다. (지력 +15, 유대감 +10)`);
         addLog('a', `이 문단 해석 좀 도와줄래? 너무 복잡해.`);
         addLog('b', `아, 그건 고대 수어문법이야. 이렇게 풀면 돼.`);
     } else if (actionType === '함께휴식') {
@@ -296,27 +321,24 @@ window.doCoopSchedule = function(actionType) {
         S.money -= 20;
         S.stats.a.stress = Math.max(0, S.stats.a.stress - 50); S.stats.b.stress = Math.max(0, S.stats.b.stress - 50);
         S.stats.a.rel += 20; S.stats.b.rel += 20;
-        logText = `맛있는 것을 나눠 먹으며 깊은 대화를 나눴습니다. (양쪽 스트레스 -50, 유대감 +20, 재화 -20)`;
+        addLog('sys', `[합동 스케줄] 맛있는 것을 나눠 먹으며 깊은 대화를 나눴습니다. (스트레스 대폭 감소, 유대감 +20)`);
         addLog('a', `우리 진짜 최고의 팀인 것 같아. 안 그래?`);
         addLog('b', `당연하지. 앞으로도 계속 내 등 뒤를 부탁해!`);
     }
 
-    addLog('sys', `[🤝 합동 스케줄 완료] ${logText}`);
     checkStress('a'); checkStress('b');
-    endTurn(2); // 턴 2개 소모
+    endTurn(2); 
 };
 
-// --- TRPG 2인 협력 전투 시스템 ---
+// --- TRPG 전투 시스템 (시스템 중계) ---
 window.startCombat = function(finderKey) {
     const enemyTmpl = ENEMIES[Math.floor(Math.random() * ENEMIES.length)];
     S.combat = {
-        name: enemyTmpl.name,
-        hp: enemyTmpl.hp, maxHp: enemyTmpl.hp,
+        name: enemyTmpl.name, hp: enemyTmpl.hp, maxHp: enemyTmpl.hp,
         atk: enemyTmpl.atk, ac: enemyTmpl.ac,
-        reward: enemyTmpl.reward, desc: enemyTmpl.desc,
-        aggro: finderKey // 적이 현재 타겟팅하는 대상
+        reward: enemyTmpl.reward, desc: enemyTmpl.desc, aggro: finderKey
     };
-    addLog('sys', `⚠️ [전투 발생] 탐험 중 괴물과 조우했습니다! 생명줄을 당겨 서로를 도우세요.`, true);
+    addLog('sys', `⚠️ [인카운터] ${S.names[finderKey]}이(가) 탐험 중 [${enemyTmpl.name}]와(과) 조우했습니다! 전투에 돌입합니다.`, true);
     save(); render();
 };
 
@@ -326,80 +348,72 @@ window.doCombatAction = function(actorKey, actionType) {
     const partnerKey = actorKey === 'a' ? 'b' : 'a';
     
     let d20 = rollDice(20);
-    let logText = ""; let dmg = 0;
+    let dmg = 0;
 
-    // 공격 판정
     if (actionType === '물리') {
         const mod = Math.floor(st.hp / 10);
         const total = d20 + mod;
         if (d20 === 20) { 
             dmg = rollDice(6) + rollDice(6) + mod + 15;
-            logText = `⚔️ [물리 공격] 🎲대성공(20)! ${enemy.name}에게 ${dmg}의 엄청난 피해!`;
+            addLog('sys', `⚔️ [${S.names[actorKey]}의 물리공격] 🎲대성공(20)! 크리티컬 히트! ${enemy.name}에게 ${dmg}의 피해!`, true);
         } else if (total >= enemy.ac) {
             dmg = rollDice(6) + mod + 5;
-            logText = `⚔️️ [물리 공격] (🎲${d20}+${mod}=${total}) 명중! ${dmg}의 피해.`;
+            addLog('sys', `⚔️ [${S.names[actorKey]}의 물리공격] (🎲${d20}+${mod}=${total}) 명중. ${dmg}의 피해를 입혔습니다.`, true);
         } else {
-            logText = `⚔️ [물리 공격] (🎲${d20}+${mod}=${total}) 빗나갔습니다!`;
+            addLog('sys', `⚔️ [${S.names[actorKey]}의 물리공격] (🎲${d20}+${mod}=${total}) 공격이 빗나갔습니다!`, true);
         }
     } else if (actionType === '전술') {
         const mod = Math.floor(st.int / 10);
         const total = d20 + mod;
         if (total >= (enemy.ac + 2)) { 
             dmg = rollDice(10) + mod + 20; 
-            logText = `🔮 [전술 마법] (🎲${d20}+${mod}=${total}) 약점 간파! ${enemy.name}에게 ${dmg}의 치명적 마법 피해!`;
+            addLog('sys', `🔮 [${S.names[actorKey]}의 전술마법] (🎲${d20}+${mod}=${total}) 약점을 간파하여 ${dmg}의 치명적 마법 피해를 입혔습니다!`, true);
         } else {
-            logText = `🔮 [전술 마법] (🎲${d20}+${mod}=${total}) 마법이 흩어졌습니다.`;
+            addLog('sys', `🔮 [${S.names[actorKey]}의 전술마법] (🎲${d20}+${mod}=${total}) 마법 영창이 실패하여 흩어졌습니다.`, true);
         }
     } else if (actionType === '협동마법') {
-        // 유대(Rel) 스탯을 공격력 보정치로 사용하는 2인 합동기
         if (st.rel < 50) { alert("유대감이 50 이상이어야 사용 가능합니다."); return; }
         const mod = Math.floor(st.rel / 5);
-        // 주사위 2개를 굴려 높은 값 적용 (Advantage)
         const d20_1 = rollDice(20); const d20_2 = rollDice(20);
         d20 = Math.max(d20_1, d20_2);
         const total = d20 + mod;
         
         if (total >= enemy.ac) {
             dmg = rollDice(12) + rollDice(12) + mod + 10;
-            logText = `🤝 [유대: 합동 전술] (🎲Adv: ${d20}+${mod}=${total}) 두 사람의 완벽한 호흡! ${enemy.name}에게 ${dmg}의 파멸적 피해!!`;
+            addLog('sys', `🤝 [합동 전술] (🎲Adv: ${d20}+${mod}=${total}) 두 사람의 완벽한 호흡! ${enemy.name}에게 ${dmg}의 파멸적 피해를 입힙니다!!`, true);
         } else {
-            logText = `🤝 [유대: 합동 전술] (🎲Adv: ${d20}+${mod}=${total}) 호흡이 어긋나 공격이 빗나갔습니다!`;
+            addLog('sys', `🤝 [합동 전술] (🎲Adv: ${d20}+${mod}=${total}) 호흡이 어긋나 공격이 빗나갔습니다!`, true);
         }
     } else if (actionType === '감싸기') {
-        // 적의 어그로를 자신에게 돌리고 파트너와의 유대감 상승
         enemy.aggro = actorKey;
         st.rel += 5; S.stats[partnerKey].rel += 5;
-        logText = `🛡️ [보호] ${S.names[actorKey]}이(가) 앞을 가로막아 어그로를 끌었습니다! (유대감 상승)`;
-        addLog(actorKey, `물러서! 이 녀석은 내가 맡을게!`, true);
+        addLog('sys', `🛡️ [보호] ${S.names[actorKey]}이(가) 앞을 가로막아 어그로를 끌었습니다! (유대감 상승)`, true);
+        addLog(actorKey, `물러서! 이 녀석은 내가 맡을게!`);
     }
 
     enemy.hp -= dmg;
-    if (actionType !== '감싸기') addLog(actorKey, logText, true);
 
-    // 승패 판정
     if (enemy.hp <= 0) {
         S.money += enemy.reward;
-        addLog('sys', `🎉 [전투 승리] ${enemy.name}을(를) 물리치고 ${enemy.reward}G를 얻었습니다!`, true);
+        addLog('sys', `🎉 [전투 종료] ${enemy.name}을(를) 물리치고 ${enemy.reward}G를 획득했습니다!`, true);
         S.combat = null;
         endTurn(1); 
     } else {
-        // 적의 반격 (어그로 대상에게)
         const targetKey = enemy.aggro;
         const enemyDmg = Math.max(1, enemy.atk + rollDice(6) - 5);
         const stressDmg = Math.floor(enemyDmg / 2);
         
         S.stats[targetKey].stress += stressDmg;
         S.stats[targetKey].hp = Math.max(0, S.stats[targetKey].hp - Math.floor(enemyDmg / 3));
-        
-        addLog('sys', `🩸 [반격] ${enemy.name}이(가) ${S.names[targetKey]}을(를) 타격! 스트레스 +${stressDmg}, 체력 감소!`, true);
+        addLog('sys', `🩸 [반격] ${enemy.name}의 공격! ${S.names[targetKey]}의 스트레스가 ${stressDmg} 오르고 체력이 감소합니다!`, true);
         
         if (S.stats[targetKey].stress >= 100) {
-             addLog('sys', `💀 [전투 패배] ${S.names[targetKey]}이(가) 공포를 견디지 못하고 기절했습니다! 황급히 철수합니다.`, true);
+             addLog('sys', `💀 [전투 패배] ${S.names[targetKey]}이(가) 공포를 견디지 못하고 기절했습니다! 황급히 전투를 이탈합니다. (소지금 -50G)`, true);
              S.combat = null;
-             S.money = Math.max(0, S.money - 50); // 병원비
+             S.money = Math.max(0, S.money - 50); 
              S.stats[targetKey].stress = 60;
              S.stats[targetKey].sick = true;
-             addLog('sys', `⚠️ [수몰병 발병] 극심한 공포 여파로 수몰병에 걸렸습니다.`);
+             addLog('sys', `⚠️ [상태이상] 극심한 공포의 여파로 수몰병에 걸렸습니다.`);
              endTurn(1);
         }
     }
@@ -413,7 +427,7 @@ window.fleeCombat = function() {
     endTurn(1);
 };
 
-// --- 농사 및 상호작용 (스타듀밸리) ---
+// --- 농사 시스템 ---
 window.openSeedShop = function(slotIndex) {
     if (S.combat) return; 
     const back = document.createElement('div');
@@ -445,7 +459,7 @@ window.plantSeed = function(slotIndex, seedKey) {
     if (S.money < seed.cost) return;
     S.money -= seed.cost;
     S.farm[slotIndex] = { key: seedKey, remain: seed.time, crop: seed.crop };
-    addLog('sys', `[농사] 텃밭에 '${seedKey} 씨앗'을 심었습니다! (${seed.time}턴 후 수확)`);
+    addLog('sys', `[농사] 텃밭에 '${seedKey}'(을)를 심었습니다. (${seed.time}턴 후 수확)`);
     document.getElementById('seedModal').remove(); save(); render();
 };
 
@@ -455,7 +469,7 @@ window.harvestCrop = function(slotIndex) {
     const cropName = cropData.crop;
     S.items[cropName] = (S.items[cropName] || 0) + 1;
     S.farm[slotIndex] = null;
-    addLog('sys', `[수확] 텃밭에서 탐스러운 '${cropName}'을(를) 수확하여 가방에 넣었습니다.`);
+    addLog('sys', `[수확] 탐스러운 '${cropName}'을(를) 수확하여 가방에 넣었습니다.`);
     save(); render();
 };
 
@@ -472,8 +486,8 @@ window.consumeItem = function(itemName, target) {
     if (itemData.healHp) st.hp += itemData.healHp;
     if (itemData.healStr) st.stress = Math.max(0, st.stress - itemData.healStr);
 
-    addLog('sys', `[아이템] ${S.names[target]}이(가) '${itemName}'을(를) 섭취했습니다. (체력 +${itemData.healHp||0}, 스트레스 -${itemData.healStr||0})`);
-    addLog(target, `냠냠... 기운이 펄펄 나는걸?`);
+    addLog('sys', `[아이템 사용] ${S.names[target]}이(가) '${itemName}'을(를) 섭취했습니다. (체력 회복 / 스트레스 감소)`);
+    addLog(target, `맛있어! 기운이 펄펄 나는걸?`);
     save(); render();
 };
 
@@ -490,6 +504,7 @@ window.sellItem = function(itemName) {
     save(); render();
 };
 
+// --- 상점 시스템 ---
 window.openShop = function() {
     if (S.combat) return;
     const back = document.createElement('div');
@@ -527,13 +542,13 @@ window.buyShopItem = function(itemId, target) {
         S.stats[target].stress = Math.max(0, S.stats[target].stress + item.val);
         if (S.stats[target].sick) {
             S.stats[target].sick = false;
-            addLog('sys', `✨ [완치] ${S.names[target]}의 수몰병이 깨끗이 나았습니다!`);
+            addLog('sys', `✨ [완치] 고대 산소통의 힘으로 ${S.names[target]}의 수몰병이 깨끗이 나았습니다!`);
         }
     }
     else if (item.type === 'rel') { S.stats.a.rel += item.val; S.stats.b.rel += item.val; } 
     else S.stats[target][item.type] += item.val;
     
-    addLog('sys', `[상점] ${S.names[target]}에게 특별한 선물 '${item.name}'을(를) 주었습니다! 스탯이 오릅니다.`);
+    addLog('sys', `[상점] ${S.names[target]}에게 특별한 선물 '${item.name}'을(를) 주었습니다!`);
     document.getElementById('shopModal').remove();
     save(); render(); openShop();
 };
@@ -561,7 +576,7 @@ function evaluateEnding() {
     addLog('pet', `크루루룽... (장성한 아이들을 보며 만족스럽게 낮게 웁니다.)`);
 }
 
-// 롤플레잉 입력 처리
+// 롤플레잉(RP) 입력 처리
 window.submitCustomLog = function() {
     const speaker = document.getElementById('customSpeaker').value;
     const text = document.getElementById('customLogInput').value.trim();
@@ -578,9 +593,10 @@ function render() {
     const currentSeason = getSeason();
     const tideText = TIDES[S.tide];
 
+    // 코코포리아식 채팅 로그
     const logHtml = S.logs.map(log => {
         const isSys = log.name.includes('시스템');
-        const color = isSys ? '#666' : '#8a5145';
+        const color = isSys ? '#555' : '#8a5145';
         let bg = isSys ? '#e5dece' : '#fffdf8';
         let border = '1px solid #d8cfbd';
         
@@ -603,16 +619,16 @@ function render() {
     let leftPanelHtml = "";
 
     if (S.combat) {
-        // --- 전투 UI (유대 협력기 추가) ---
+        // --- 전투 UI ---
         const c = S.combat;
         const hpPercent = Math.max(0, (c.hp / c.maxHp) * 100);
         leftPanelHtml = `
             <div style="background:#1e272e; color:white; padding:20px; border-radius:12px; border:2px solid #e74c3c; display:flex; flex-direction:column; height:100%;">
-                <h3 style="margin-top:0; color:#ff7675; border-bottom:1px solid #555; padding-bottom:10px;">⚠️️ 전투 돌입! TRPG 주사위 굴림</h3>
+                <h3 style="margin-top:0; color:#ff7675; border-bottom:1px solid #555; padding-bottom:10px;">⚠ 전투 돌입! TRPG 주사위 굴림</h3>
                 <div style="text-align:center; margin-bottom:20px; background:#2f3640; padding:15px; border-radius:8px;">
                     <h2 style="margin:5px 0; color:#ff9f43;">${c.name}</h2>
                     <p style="color:#aaa; font-size:0.9rem; margin-bottom:10px;">${c.desc}</p>
-                    <p style="color:#e74c3c; font-size:0.8rem; margin-bottom:10px;">🎯 현재 어그로 타겟: ${esc(S.names[c.aggro])}</p>
+                    <p style="color:#e74c3c; font-size:0.8rem; margin-bottom:10px;">🎯 현재 몬스터의 어그로 타겟: ${esc(S.names[c.aggro])}</p>
                     <div style="background:#555; border-radius:10px; height:15px; overflow:hidden; width:100%; border:1px solid #222;">
                         <div style="background:#e84118; width:${hpPercent}%; height:100%; transition:width 0.3s;"></div>
                     </div>
@@ -626,13 +642,12 @@ function render() {
                             <b style="color:#3498db;">${esc(S.names.a)}의 턴</b>
                         </div>
                         <div style="display:flex; gap:5px; margin-bottom:5px;">
-                            <button onclick="doCombatAction('a', '물리')" style="flex:1; padding:8px; background:#e74c3c; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">⚔️ 물리 타격</button>
+                            <button onclick="doCombatAction('a', '물리')" style="flex:1; padding:8px; background:#e74c3c; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">⚔️️ 물리 타격</button>
                             <button onclick="doCombatAction('a', '전술')" style="flex:1; padding:8px; background:#9b59b6; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🔮 전술 마법</button>
-                            <button onclick="doCombatAction('a', '교란')" style="flex:1; padding:8px; background:#f1c40f; color:#333; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">✨ 매력 교란</button>
                         </div>
                         <div style="display:flex; gap:5px;">
                             <button onclick="doCombatAction('a', '협동마법')" style="flex:2; padding:8px; background:#1abc9c; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🤝 유대: 합동 전술 (Advantage)</button>
-                            <button onclick="doCombatAction('a', '감싸기')" style="flex:1; padding:8px; background:#34495e; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🛡️ 감싸기</button>
+                            <button onclick="doCombatAction('a', '감싸기')" style="flex:1; padding:8px; background:#34495e; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🛡️ 대신 맞기</button>
                         </div>
                     </div>
                     
@@ -644,22 +659,43 @@ function render() {
                         <div style="display:flex; gap:5px; margin-bottom:5px;">
                             <button onclick="doCombatAction('b', '물리')" style="flex:1; padding:8px; background:#e74c3c; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">⚔️ 물리 타격</button>
                             <button onclick="doCombatAction('b', '전술')" style="flex:1; padding:8px; background:#9b59b6; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🔮 전술 마법</button>
-                            <button onclick="doCombatAction('b', '교란')" style="flex:1; padding:8px; background:#f1c40f; color:#333; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">✨ 매력 교란</button>
                         </div>
                         <div style="display:flex; gap:5px;">
                             <button onclick="doCombatAction('b', '협동마법')" style="flex:2; padding:8px; background:#1abc9c; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🤝 유대: 합동 전술 (Advantage)</button>
-                            <button onclick="doCombatAction('b', '감싸기')" style="flex:1; padding:8px; background:#34495e; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🛡️ 감싸기</button>
+                            <button onclick="doCombatAction('b', '감싸기')" style="flex:1; padding:8px; background:#34495e; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🛡️ 대신 맞기</button>
                         </div>
                     </div>
                     
                     <div style="margin-top:auto; display:flex; gap:10px;">
-                        <button onclick="fleeCombat()" style="flex:1; padding:10px; background:#7f8c8d; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🏃 도주 (돈 15G 상실)</button>
+                        <button onclick="fleeCombat()" style="flex:1; padding:10px; background:#7f8c8d; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🏃 전투 포기 및 도주 (가문 재화 -15G)</button>
                     </div>
                 </div>
             </div>
         `;
     } else {
-        // --- 평시 스케줄 / 농사 / 인벤토리 UI ---
+        // --- 퀘스트(의뢰) 보드 렌더링 ---
+        let questHtml = '';
+        if (S.activeQuests.length > 0) {
+            S.activeQuests.forEach((qId, i) => {
+                const q = QUEST_DB.find(x => x.id === qId);
+                if (!q) return;
+                const isReady = q.req(S);
+                questHtml += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:6px 10px; border:1px solid #ccc; border-radius:6px; margin-bottom:5px;">
+                        <div>
+                            <div style="font-weight:bold; font-size:0.85rem;">${q.title}</div>
+                            <div style="font-size:0.75rem; color:#666;">${q.desc}</div>
+                        </div>
+                        <button onclick="claimQuest(${i})" style="padding:4px 8px; font-size:0.75rem; font-weight:bold; border-radius:4px; cursor:${isReady ? 'pointer' : 'not-allowed'}; background:${isReady ? '#d4af37' : '#eee'}; color:${isReady ? '#fff' : '#aaa'}; border:1px solid ${isReady ? '#b8860b' : '#ccc'};" ${isReady ? '' : 'disabled'}>
+                            ${isReady ? `보상 ${q.reward}G 받기` : '진행 중'}
+                        </button>
+                    </div>`;
+            });
+        } else {
+            questHtml = `<small style="color:#888;">더 이상 받을 수 있는 의뢰가 없습니다. 대단하시군요!</small>`;
+        }
+
+        // --- 스탯 및 스케줄 렌더링 ---
         const renderStats = (key) => {
             const st = S.stats[key];
             const isSick = st.sick;
@@ -677,7 +713,7 @@ function render() {
                     <div>💪 체력(HP): <b style="color:#8a5145;">${st.hp}</b></div>
                     <div>📚 지력(INT): <b style="color:#4b675d;">${st.int}</b></div>
                     <div>✨ 매력(CHA): <b style="color:#d4af37;">${st.charm}</b></div>
-                    <div style="color:${stressColor};">⚠️ 스트레스: <b>${st.stress}/100</b></div>
+                    <div style="color:${stressColor};">⚠️️ 스트레스: <b>${st.stress}/100</b></div>
                 </div>
                 ${S.gameOver ? '' : `
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px;">
@@ -723,6 +759,15 @@ function render() {
 
         leftPanelHtml = `
             <div style="background:#f9f9f9; padding:15px; border-radius:12px; border:1px solid #d8cfbd; overflow-y:auto; display:flex; flex-direction:column; height:100%;">
+                
+                <!-- 📜 의뢰 보드 추가 -->
+                <div style="margin-bottom:15px; background:#fffdf8; padding:12px; border:1px solid #e5dece; border-radius:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #8a5145; padding-bottom:5px; margin-bottom:10px;">
+                        <h3 style="margin:0; color:#8a5145;">📜 의뢰 보드 (목표)</h3>
+                    </div>
+                    ${questHtml}
+                </div>
+                
                 <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #17332f; padding-bottom:5px; margin-bottom:15px;">
                     <h3 style="margin:0;">개별 스케줄 관리 (1턴 소모)</h3>
                 </div>
@@ -763,7 +808,7 @@ function render() {
                 <div class="sub">방 코드: ${esc(S.roomCode)} | ${currentSeason} (🗓️ ${S.month}개월 차 / ${S.turn}/4 턴) / ${tideText}</div>
             </div>
             <div style="display:flex; gap:15px; align-items:center;">
-                <div class="clock"><div class="sub">공유 가문 재화</div><b style="color:#d4af37; font-size:1.3rem;">${S.money} G</b></div>
+                <div class="clock"><div class="sub">가문 재화</div><b style="color:#d4af37; font-size:1.3rem;">${S.money} G</b></div>
                 ${(!S.gameOver && !S.combat) ? `<button class="primary" style="background:#8a5145; border:none; padding:8px 15px;" onclick="openShop()">⛵ 상점 열기</button>` : ''}
             </div>
         </div>
@@ -778,12 +823,12 @@ function render() {
                     ${logHtml}
                 </div>
                 
+                <!-- 직접 입력창에서 시스템(GM) 롤플레잉 옵션을 완전히 제거 -->
                 <div style="background:#fffdf8; padding:15px; border-top:1px solid #ccc; display:flex; gap:10px; align-items:center;">
                     <select id="customSpeaker" style="padding:10px; border-radius:6px; border:1px solid #ccc; font-weight:bold; width:110px; background:#fff; cursor:pointer;">
                         <option value="a">${esc(S.names.a)}</option>
                         <option value="b">${esc(S.names.b)}</option>
                         <option value="pet">${esc(S.names.pet)}</option>
-                        <option value="sys">GM(시스템)</option>
                     </select>
                     <input type="text" id="customLogInput" onkeypress="handleInputEnter(event)" placeholder="행동이나 대사를 직접 입력해 롤플레잉을 진행하세요." style="flex:1; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:0.95rem;">
                     <button onclick="submitCustomLog()" style="background:#2c7771; color:white; border:none; border-radius:6px; padding:0 20px; font-weight:bold; cursor:pointer; height:100%;">전송</button>
